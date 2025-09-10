@@ -114,7 +114,7 @@ except Exception as e:
     
     // Execute Python script with timeout and resource limits
     const result = await new Promise<ExecutionResult>((resolve, reject) => {
-      const python = spawn('python3', [scriptFile], {
+      const python = spawn('.pythonlibs/bin/python', [scriptFile], {
         cwd: tempDir,
         timeout: 30000, // 30 second timeout
         env: {
