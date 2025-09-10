@@ -53,7 +53,7 @@ export class DatabaseStorage implements IStorage {
   async createUpload(upload: InsertUpload): Promise<Upload> {
     const [result] = await db
       .insert(uploads)
-      .values(upload)
+      .values(upload as any)
       .returning();
     return result;
   }
@@ -97,7 +97,7 @@ export class DatabaseStorage implements IStorage {
   async createPlaybook(playbook: InsertPlaybook): Promise<Playbook> {
     const [result] = await db
       .insert(playbooks)
-      .values(playbook)
+      .values(playbook as any)
       .returning();
     return result;
   }
@@ -133,7 +133,7 @@ export class DatabaseStorage implements IStorage {
   async createRun(run: InsertRun): Promise<Run> {
     const [result] = await db
       .insert(runs)
-      .values(run)
+      .values(run as any)
       .returning();
     return result;
   }
