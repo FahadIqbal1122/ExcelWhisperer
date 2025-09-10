@@ -41,6 +41,16 @@ Requirements:
 3. Use a function named transform_data(df) that takes a DataFrame and returns the transformed DataFrame
 4. Handle edge cases and data type conversions
 5. Identify any parameters that could be made configurable
+6. IMPORTANT: Always specify explicit values for pandas functions:
+   - For fillna(), always use fillna(value="some_value") or fillna(method="ffill")
+   - For dropna(), be explicit about parameters
+   - Use proper pandas syntax that works with pandas 2.x
+
+CRITICAL PANDAS RULES:
+- df.fillna("unknown") instead of df.fillna()
+- df.fillna(0) for numeric columns
+- df.fillna(method="ffill") for forward fill
+- Always return a valid DataFrame from transform_data()
 
 Respond with JSON in this exact format:
 {
@@ -123,6 +133,12 @@ Error message:
 ${errorMessage}
 
 Available columns: ${columns.map(col => `${col.name} (${col.type})`).join(', ')}
+
+CRITICAL PANDAS RULES TO FIX:
+- For fillna(), always use fillna(value="some_value") or fillna(method="ffill")
+- For dropna(), be explicit about parameters
+- Use proper pandas syntax that works with pandas 2.x
+- Always return a valid DataFrame from transform_data()
 
 Generate a corrected version of the code. Respond with JSON in the same format as before.`;
 
