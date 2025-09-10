@@ -124,7 +124,7 @@ Basic unit tests for parsing, code generation interface, run executor, and API e
 
 Sample NL prompts and expected transformations for tests
 
-Input: "remove rows where Status equals Closed and Date before 2023-01-01"
+Input: "Remove all data from Category column"
 Expected: filter rows where Status != "Closed" or Date >= 2023-01-01
 
 Input: "create column Priority where Priority = High if Amount > 1000 else Low"

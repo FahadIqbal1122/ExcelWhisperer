@@ -44,7 +44,7 @@ export function NaturalLanguageProcessor({ uploadId, sheetName, onCodeGenerated 
 
       const result = await response.json();
       onCodeGenerated(result);
-      
+
       toast({
         title: "Code generated successfully",
         description: `Generated with ${result.confidence} confidence.`,
@@ -82,12 +82,12 @@ export function NaturalLanguageProcessor({ uploadId, sheetName, onCodeGenerated 
               onChange={(e) => setNlInstruction(e.target.value)}
               className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent resize-none"
               rows={3}
-              placeholder="e.g., remove rows where Status equals Closed and Date before 2023-01-01"
+              placeholder="e.g., Remove all data from Category column"
               disabled={isGenerating}
               data-testid="textarea-nl-instruction"
             />
           </div>
-          
+
           {/* Quick Commands */}
           <div>
             <p className="text-sm font-medium text-foreground mb-2">Quick commands:</p>
@@ -108,7 +108,7 @@ export function NaturalLanguageProcessor({ uploadId, sheetName, onCodeGenerated 
             </div>
           </div>
 
-          <Button 
+          <Button
             className="w-full bg-primary text-primary-foreground py-2 px-4 rounded-md font-medium hover:bg-primary/90 transition-colors"
             onClick={handleGenerateCode}
             disabled={isGenerating || !nlInstruction.trim()}

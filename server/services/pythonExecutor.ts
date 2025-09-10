@@ -28,14 +28,14 @@ export async function executePandasCode(
   const inputFile = join(tempDir, `input_${executionId}.json`);
   const outputFile = join(tempDir, `output_${executionId}.json`);
   const scriptFile = join(tempDir, `script_${executionId}.py`);
-  
+
   try {
     // Prepare input data
     await fs.writeFile(inputFile, JSON.stringify({
       data: inputData,
       parameters
     }));
-    
+
     // Create Python script with safety restrictions
     const pythonScript = `
 import sys
@@ -46,17 +46,23 @@ from datetime import datetime, timedelta
 import warnings
 warnings.filterwarnings('ignore')
 
-# Security: Restrict imports and dangerous operations
+# Security: Restrict only dangerous imports instead of whitelisting everything
 import builtins
 original_import = builtins.__import__
 
 def restricted_import(name, *args, **kwargs):
-    allowed_modules = {
-        'pandas', 'numpy', 'datetime', 'json', 'math', 'statistics',
-        'collections', 'itertools', 'functools', 'operator', 're'
+    # Blacklist dangerous modules instead of whitelisting
+    dangerous_modules = {
+        'os', 'sys', 'subprocess', 'shutil', 'socket', 'threading', 
+        'multiprocessing', 'ctypes', 'mmap', 'fcntl', 'resource',
+        'signal', 'pwd', 'grp', 'termios', 'pty', 'posix', 'winreg',
+        'msvcrt', '_winapi', 'win32api', 'win32con', 'win32security'
     }
-    if name.split('.')[0] not in allowed_modules:
-        raise ImportError(f"Module '{name}' is not allowed")
+    
+    module_base = name.split('.')[0]
+    if module_base in dangerous_modules:
+        raise ImportError(f"Module '{name}' is not allowed for security reasons")
+    
     return original_import(name, *args, **kwargs)
 
 builtins.__import__ = restricted_import
@@ -83,7 +89,7 @@ ${code.split('\n').map(line => '    ' + line).join('\n')}
     rows_affected = abs(original_row_count - result_row_count)
     
     # Convert result to JSON-serializable format
-    result_data = result_df.fillna(None).to_dict('records')
+    result_data = result_df.where(pd.notnull(result_df), None).to_dict('records')
     preview_data = result_data[:10] if len(result_data) > 10 else result_data
     
     # Prepare output
@@ -109,12 +115,12 @@ except Exception as e:
     with open('${outputFile}', 'w') as f:
         json.dump(error_output, f)
 `;
-    
+
     await fs.writeFile(scriptFile, pythonScript);
-    
+
     // Execute Python script with timeout and resource limits
     const result = await new Promise<ExecutionResult>((resolve, reject) => {
-      const python = spawn('/home/runner/workspace/.pythonlibs/bin/python3', [scriptFile], {
+      const python = spawn('/usr/bin/python3', [scriptFile], {
         cwd: tempDir,
         timeout: 30000, // 30 second timeout
         env: {
@@ -123,22 +129,22 @@ except Exception as e:
           PATH: '/usr/bin:/bin' // Restrict PATH
         }
       });
-      
+
       let stdout = '';
       let stderr = '';
-      
+
       python.stdout.on('data', (data) => {
         stdout += data.toString();
       });
-      
+
       python.stderr.on('data', (data) => {
         stderr += data.toString();
       });
-      
+
       python.on('close', async (code) => {
         try {
           const executionTime = Date.now() - startTime;
-          
+
           if (code !== 0) {
             resolve({
               success: false,
@@ -147,11 +153,11 @@ except Exception as e:
             });
             return;
           }
-          
+
           // Read output
           const outputContent = await fs.readFile(outputFile, 'utf-8');
           const output = JSON.parse(outputContent);
-          
+
           resolve({
             ...output,
             executionTime
@@ -164,7 +170,7 @@ except Exception as e:
           });
         }
       });
-      
+
       python.on('error', (error) => {
         resolve({
           success: false,
@@ -173,7 +179,7 @@ except Exception as e:
         });
       });
     });
-    
+
     return result;
   } catch (error) {
     return {
@@ -185,9 +191,9 @@ except Exception as e:
     // Cleanup temporary files
     try {
       await Promise.all([
-        fs.unlink(inputFile).catch(() => {}),
-        fs.unlink(outputFile).catch(() => {}),
-        fs.unlink(scriptFile).catch(() => {})
+        fs.unlink(inputFile).catch(() => { }),
+        fs.unlink(outputFile).catch(() => { }),
+        fs.unlink(scriptFile).catch(() => { })
       ]);
     } catch (error) {
       console.error('Cleanup error:', error);
