@@ -1,0 +1,162 @@
+Goal
+
+Build a web app MVP that accepts an Excel file upload and runs natural language driven data operations on the sheet.
+
+Deliver a working flow for upload, preview, NL instruction, code generation, execution, and download.
+
+Core features
+
+Upload XLSX or CSV. Show progress. Validate file type and size.
+
+Parse workbook. Show list of sheets. Show first 100 rows preview per sheet.
+
+Auto infer column names and data types.
+
+Natural language input box for transformation commands.
+
+Translate NL into executable transformation code. Show code to the user.
+
+Run transformation on the server on the uploaded sheet. Show a row count and sample preview of results.
+
+Allow download of processed sheet as XLSX or CSV.
+
+Save transformation as a named Playbook with parameters and preview.
+
+Ability to re-run Playbook on new uploads with saved parameter mapping.
+
+Basic audit log for each run. Show input NL, generated code, run timestamp, run status, and error messages.
+
+Secure temporary storage. Delete uploaded files after a configurable TTL unless user saves result.
+
+User stories
+
+As a user, I upload an XLSX. I pick a sheet. I type "remove rows where Status equals Closed and Date before 2023-01-01". The app shows the generated code, shows a preview, and lets me download the filtered sheet.
+
+As a user, I type "add column Priority, value High when Amount > 1000 else Low". The app shows code, shows preview, and downloads result.
+
+As a user, I save a Playbook named "Clean Sales" with two parameters: date cutoff and amount threshold. I run it on a new file by mapping columns.
+
+Tech stack suggestion
+
+Backend: Node.js with TypeScript and Fastify or Python with FastAPI. Pick one.
+
+Transformation engine: Python pandas or JavaScript with Danfo.js. Pick one and keep code-first execution.
+
+File parsing: use a robust XLSX parser like openpyxl or sheetjs.
+
+Storage: S3 or S3 compatible for files. Use pre-signed upload and download URLs.
+
+Jobs: lightweight task runner for synchronous runs. Keep operations synchronous for MVP and limit file size.
+
+Frontend: React with simple UI components.
+
+Auth: simple email login for MVP or tokenless demo mode. Protect saved Playbooks behind auth.
+
+Logging: structured logs and run metadata saved to DB.
+
+DB: Postgres or SQLite for MVP.
+
+API surface (concise)
+
+POST /upload-initiate -> returns pre-signed upload URL and upload id.
+
+POST /upload-complete -> triggers parse and returns sheets and preview.
+
+GET /preview/{uploadId}/{sheet} -> returns first 100 rows and inferred schema.
+
+POST /generate-code -> body: uploadId, sheet, nl_instruction -> returns generated code, confidence, and suggested parameter list.
+
+POST /run -> body: uploadId, sheet, code, parameters -> runs code, returns runId, resultPreview, and downloadUrl on success.
+
+POST /playbooks -> save named playbook with code and parameter schema.
+
+GET /playbooks -> list playbooks for user.
+
+POST /playbooks/{id}/run -> run saved playbook on uploadId with parameter mapping.
+
+GET /runs/{runId} -> run status, logs, and artifacts.
+
+DELETE /uploads/{uploadId} -> remove files immediately.
+
+Security and data rules
+
+Encrypt files at rest.
+
+Use TLS in transit.
+
+Store credentials and secrets in vault.
+
+Limit file size to 10 MB for MVP.
+
+Auto-delete uploads after 24 hours unless saved.
+
+Log only metadata and errors. Avoid storing generated PII in logs.
+
+Provide user consent on storage and deletion.
+
+Code generation requirements
+
+Generated code must be human readable.
+
+Prefer Python pandas for transformations in MVP. Provide alternative JS module if backend chosen.
+
+Show exact code before execution.
+
+Support safe sandbox execution. Limit runtime and memory. Catch exceptions and return readable errors.
+
+Provide tests for generated code path to avoid arbitrary code execution vulnerabilities.
+
+Acceptance criteria
+
+User uploads XLSX or CSV. App shows sheet list and preview within 5 seconds for a 1 MB file.
+
+NL to code flow returns code and parameter suggestions.
+
+Running the code returns a preview with correct row count and downloadable file.
+
+Playbook save and re-run works with parameter mapping.
+
+Uploaded files auto-delete after TTL.
+
+No remote execution of arbitrary system commands from generated code.
+
+Basic unit tests for parsing, code generation interface, run executor, and API endpoints.
+
+Sample NL prompts and expected transformations for tests
+
+Input: "remove rows where Status equals Closed and Date before 2023-01-01"
+Expected: filter rows where Status != "Closed" or Date >= 2023-01-01
+
+Input: "create column Priority where Priority = High if Amount > 1000 else Low"
+Expected: adds Priority column with conditional values
+
+Input: "fill empty Email cells with 'unknown@example.com
+'"
+Expected: no nulls in Email column after run
+
+Input: "group by Region and sum Sales into TotalSales"
+Expected: aggregated sheet with Region and TotalSales
+
+Deliverables for first milestone
+
+Working frontend with upload, preview, NL input, code display, run, and download.
+
+Backend endpoints for upload, parse, generate-code, and run.
+
+Simple DB for Playbooks and runs.
+
+Tests for main flows.
+
+README with how to run locally and how to add credentials for storage.
+
+Extra notes for the AI coder
+
+Keep the system small and auditable.
+
+Prefer explicit, minimal dependencies.
+
+Keep logs readable and actionable.
+
+Treat generated code as the single source of truth for transformations.
+
+Provide example seed Playbooks and sample Excel files for testing.
